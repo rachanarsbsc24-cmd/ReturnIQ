@@ -1,6 +1,6 @@
 # ReturnIQ — E-commerce Return Intelligence Platform
 
-ReturnIQ is a React-based e-commerce return analysis platform designed to help businesses record, organize, and understand product returns.
+ReturnIQ is a e-commerce return analysis platform designed to help businesses record, organize, and understand product returns.
 
 The application identifies common return reasons and highlights products that have frequent return issues, helping businesses make better decisions about product quality, sizing, descriptions, and customer satisfaction.
 
