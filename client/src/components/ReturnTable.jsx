@@ -27,6 +27,10 @@ function ReturnTable({
   const [statusFilter, setStatusFilter] = useState('All');
   const [reasonFilter, setReasonFilter] = useState('All');
   const [sortBy, setSortBy] = useState('newest');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkStatus, setBulkStatus] = useState('Approved');
   const [editingId, setEditingId] = useState(null);
   const [editDraft, setEditDraft] = useState(null);
   const [actionMessage, setActionMessage] = useState('');
@@ -43,6 +47,27 @@ function ReturnTable({
         (item) =>
           reasonFilter === 'All' || item.reason === reasonFilter
       )
+      .filter((item) => {
+        if (!startDate && !endDate) return true;
+
+        const itemDate = new Date(item.date);
+
+        if (Number.isNaN(itemDate.getTime())) return false;
+
+        if (startDate) {
+          const start = new Date(`${startDate}T00:00:00`);
+
+          if (itemDate < start) return false;
+        }
+
+        if (endDate) {
+          const end = new Date(`${endDate}T23:59:59.999`);
+
+          if (itemDate > end) return false;
+        }
+
+        return true;
+      })
       .filter(
         (item) =>
           !normalizedQuery ||
@@ -69,12 +94,93 @@ function ReturnTable({
           return a.status.localeCompare(b.status);
         }
 
-        const dateA = Date.parse(a.date) || 0;
-        const dateB = Date.parse(b.date) || 0;
-
-        return dateB - dateA;
+        return (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0);
       });
-  }, [returns, query, statusFilter, reasonFilter, sortBy]);
+  }, [
+    returns,
+    query,
+    statusFilter,
+    reasonFilter,
+    sortBy,
+    startDate,
+    endDate,
+  ]);
+
+  const visibleIds = visibleReturns.map((item) => item.id);
+
+  const allVisibleSelected =
+    visibleIds.length > 0 &&
+    visibleIds.every((id) => selectedIds.includes(id));
+
+  const toggleSelection = (id) => {
+    setSelectedIds((current) =>
+      current.includes(id)
+        ? current.filter((selectedId) => selectedId !== id)
+        : [...current, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (allVisibleSelected) {
+      setSelectedIds((current) =>
+        current.filter((id) => !visibleIds.includes(id))
+      );
+    } else {
+      setSelectedIds((current) =>
+        [...new Set([...current, ...visibleIds])]
+      );
+    }
+  };
+
+  const exportCSV = () => {
+    const headers = [
+      'Record ID',
+      'Product',
+      'Customer',
+      'Category',
+      'Reason',
+      'Date',
+      'Status',
+    ];
+
+    const escapeCSV = (value) =>
+      `"${String(value ?? '').replace(/"/g, '""')}"`;
+
+    const rows = visibleReturns.map((item) => [
+      item.id,
+      item.product,
+      item.customer,
+      item.category,
+      item.reason,
+      item.date,
+      item.status,
+    ]);
+
+    const csvContent = [
+      headers.map(escapeCSV).join(','),
+      ...rows.map((row) => row.map(escapeCSV).join(',')),
+    ].join('\n');
+
+    const blob = new Blob(['\uFEFF' + csvContent], {
+      type: 'text/csv;charset=utf-8;',
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = `returniq-returns-${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(url);
+
+    setActionMessage(`${visibleReturns.length} records exported to CSV.`);
+  };
 
   const startEdit = (item) => {
     setEditingId(item.id);
@@ -116,12 +222,54 @@ function ReturnTable({
     if (!confirmed) return;
 
     onDeleteReturn(item.id);
+    setSelectedIds((current) =>
+      current.filter((id) => id !== item.id)
+    );
     setActionMessage('Return record deleted.');
   };
 
   const changeStatus = (id, status) => {
     onUpdateReturn(id, { status });
     setActionMessage(`Status changed to ${status}.`);
+  };
+
+  const applyBulkStatus = () => {
+    if (selectedIds.length === 0) return;
+
+    selectedIds.forEach((id) => {
+      onUpdateReturn(id, { status: bulkStatus });
+    });
+
+    setActionMessage(
+      `${selectedIds.length} records updated to ${bulkStatus}.`
+    );
+
+    setSelectedIds([]);
+  };
+
+  const deleteSelected = () => {
+    if (selectedIds.length === 0) return;
+
+    const confirmed = window.confirm(
+      `Delete ${selectedIds.length} selected return records? This cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    selectedIds.forEach((id) => onDeleteReturn(id));
+
+    setActionMessage(`${selectedIds.length} records deleted.`);
+    setSelectedIds([]);
+  };
+
+  const clearFilters = () => {
+    setQuery('');
+    setStatusFilter('All');
+    setReasonFilter('All');
+    setSortBy('newest');
+    setStartDate('');
+    setEndDate('');
+    setSelectedIds([]);
   };
 
   const statusClass = (status) => status.toLowerCase();
@@ -131,15 +279,13 @@ function ReturnTable({
       <div className="table-heading">
         <div>
           <span className="eyebrow">RETURN REGISTER</span>
-
           <h2>
             {compact ? 'Recent return activity' : 'Return activity'}
           </h2>
-
           <p>
             {compact
               ? 'The latest recorded customer returns.'
-              : 'Search, review, edit and update customer return requests.'}
+              : 'Search, filter, export and manage customer return requests.'}
           </p>
         </div>
 
@@ -149,53 +295,131 @@ function ReturnTable({
       </div>
 
       {!compact && (
-        <div className="table-tools">
-          <label className="search-field">
-            <span aria-hidden="true">⌕</span>
+        <>
+          <div className="table-tools">
+            <label className="search-field">
+              <span aria-hidden="true">⌕</span>
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search product, customer, category..."
+                aria-label="Search return records"
+              />
+            </label>
 
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search product, customer, category..."
-              aria-label="Search return records"
-            />
-          </label>
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              aria-label="Filter by status"
+            >
+              <option>All</option>
+              {STATUSES.map((status) => (
+                <option key={status}>{status}</option>
+              ))}
+            </select>
 
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            aria-label="Filter by status"
-          >
-            <option>All</option>
+            <select
+              value={reasonFilter}
+              onChange={(event) => setReasonFilter(event.target.value)}
+              aria-label="Filter by reason"
+            >
+              <option>All</option>
+              {REASONS.map((reason) => (
+                <option key={reason}>{reason}</option>
+              ))}
+            </select>
 
-            {STATUSES.map((status) => (
-              <option key={status}>{status}</option>
-            ))}
-          </select>
+            <select
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+              aria-label="Sort return records"
+            >
+              <option value="newest">Newest first</option>
+              <option value="product-az">Product A–Z</option>
+              <option value="product-za">Product Z–A</option>
+              <option value="status">Status</option>
+            </select>
+          </div>
 
-          <select
-            value={reasonFilter}
-            onChange={(event) => setReasonFilter(event.target.value)}
-            aria-label="Filter by reason"
-          >
-            <option>All</option>
+          <div className="date-filter-row">
+            <label>
+              <span>From</span>
+              <input
+                type="date"
+                value={startDate}
+                max={endDate || undefined}
+                onChange={(event) => setStartDate(event.target.value)}
+              />
+            </label>
 
-            {REASONS.map((reason) => (
-              <option key={reason}>{reason}</option>
-            ))}
-          </select>
+            <label>
+              <span>To</span>
+              <input
+                type="date"
+                value={endDate}
+                min={startDate || undefined}
+                onChange={(event) => setEndDate(event.target.value)}
+              />
+            </label>
 
-          <select
-            value={sortBy}
-            onChange={(event) => setSortBy(event.target.value)}
-            aria-label="Sort return records"
-          >
-            <option value="newest">Newest first</option>
-            <option value="product-az">Product A–Z</option>
-            <option value="product-za">Product Z–A</option>
-            <option value="status">Status</option>
-          </select>
-        </div>
+            <button
+              type="button"
+              className="mini-action"
+              onClick={clearFilters}
+            >
+              Clear filters
+            </button>
+
+            <button
+              type="button"
+              className="export-button"
+              onClick={exportCSV}
+              disabled={visibleReturns.length === 0}
+            >
+              ↓ Export CSV
+            </button>
+          </div>
+
+          {selectedIds.length > 0 && (
+            <div className="bulk-toolbar">
+              <strong>{selectedIds.length} selected</strong>
+
+              <select
+                value={bulkStatus}
+                onChange={(event) => setBulkStatus(event.target.value)}
+                aria-label="Choose bulk status"
+              >
+                {STATUSES.map((status) => (
+                  <option key={status}>{status}</option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                className="mini-action save"
+                onClick={applyBulkStatus}
+              >
+                Update selected
+              </button>
+
+              <button
+                type="button"
+                className="mini-action danger"
+                onClick={deleteSelected}
+              >
+                Delete selected
+              </button>
+
+              <button
+                type="button"
+                className="mini-action"
+                onClick={() => setSelectedIds([])}
+              >
+                Deselect
+              </button>
+            </div>
+          )}
+        </>
       )}
 
       {actionMessage && (
@@ -217,6 +441,16 @@ function ReturnTable({
           <table>
             <thead>
               <tr>
+                {!compact && (
+                  <th>
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      onChange={toggleSelectAll}
+                      aria-label="Select all visible records"
+                    />
+                  </th>
+                )}
                 <th>Product / customer</th>
                 <th>Category</th>
                 <th>Return reason</th>
@@ -231,6 +465,17 @@ function ReturnTable({
                 .slice(0, compact ? 5 : undefined)
                 .map((item) => (
                   <tr key={item.id}>
+                    {!compact && (
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(item.id)}
+                          onChange={() => toggleSelection(item.id)}
+                          aria-label={`Select ${item.product}`}
+                        />
+                      </td>
+                    )}
+
                     <td>
                       {editingId === item.id ? (
                         <form className="inline-edit" onSubmit={saveEdit}>
@@ -256,10 +501,7 @@ function ReturnTable({
                             }
                           />
 
-                          <button
-                            type="submit"
-                            className="mini-action save"
-                          >
+                          <button type="submit" className="mini-action save">
                             Save
                           </button>
 
@@ -279,7 +521,6 @@ function ReturnTable({
                           <strong className="table-product">
                             {item.product}
                           </strong>
-
                           <span className="table-customer">
                             {item.customer}
                           </span>

@@ -52,14 +52,13 @@ function AdvancedAnalytics({ returns }) {
     month,
     count: returns.filter((item) => {
       const date = new Date(item.date);
-      return !Number.isNaN(date.getTime()) && date.getMonth() === index;
+
+      return (
+        !Number.isNaN(date.getTime()) &&
+        date.getMonth() === index
+      );
     }).length,
   }));
-
-  const maxMonthlyCount = Math.max(
-    1,
-    ...monthlyCounts.map((item) => item.count)
-  );
 
   const maxReasonCount = Math.max(
     1,
@@ -71,8 +70,34 @@ function AdvancedAnalytics({ returns }) {
     ...categories.map((item) => item.count)
   );
 
+  const maxMonthlyCount = Math.max(
+    1,
+    ...monthlyCounts.map((item) => item.count)
+  );
+
+  const printReport = () => {
+    window.print();
+  };
+
   return (
     <section className="advanced-analytics">
+      <div className="analytics-report-heading">
+        <div>
+          <span className="eyebrow">RETURNIQ REPORT</span>
+          <p>
+            Generated on {new Date().toLocaleDateString()}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="export-button print-button"
+          onClick={printReport}
+        >
+          ⎙ Print / Save PDF
+        </button>
+      </div>
+
       <div className="analytics-kpis">
         <article>
           <span>Total requests</span>
@@ -109,9 +134,10 @@ function AdvancedAnalytics({ returns }) {
             <span className="mini-icon">↗</span>
           </div>
 
-          {reasonCounts.length === 0 ||
-          reasonCounts.every((item) => item.count === 0) ? (
-            <p className="muted-empty">No return reason data available yet.</p>
+          {total === 0 ? (
+            <p className="muted-empty">
+              No return reason data available yet.
+            </p>
           ) : (
             reasonCounts.map((item) => (
               <div className="reason-row" key={item.name}>
@@ -121,7 +147,7 @@ function AdvancedAnalytics({ returns }) {
                     {item.count}
                     <small>
                       {' '}
-                      ({total ? Math.round((item.count / total) * 100) : 0}%)
+                      ({Math.round((item.count / total) * 100)}%)
                     </small>
                   </strong>
                 </div>
@@ -149,7 +175,9 @@ function AdvancedAnalytics({ returns }) {
           </div>
 
           {categories.length === 0 ? (
-            <p className="muted-empty">No category data available yet.</p>
+            <p className="muted-empty">
+              No category data available yet.
+            </p>
           ) : (
             categories.map((item) => (
               <div className="reason-row" key={item.name}>
@@ -183,7 +211,9 @@ function AdvancedAnalytics({ returns }) {
           <div className="monthly-chart">
             {monthlyCounts.map((item) => (
               <div className="month-column" key={item.month}>
-                <span className="month-value">{item.count || ''}</span>
+                <span className="month-value">
+                  {item.count || ''}
+                </span>
 
                 <div className="month-track">
                   <div
@@ -214,9 +244,21 @@ function AdvancedAnalytics({ returns }) {
           </div>
 
           {[
-            { name: 'Pending', count: pending, className: 'pending' },
-            { name: 'Approved', count: approved, className: 'approved' },
-            { name: 'Rejected', count: rejected, className: 'rejected' },
+            {
+              name: 'Pending',
+              count: pending,
+              className: 'pending',
+            },
+            {
+              name: 'Approved',
+              count: approved,
+              className: 'approved',
+            },
+            {
+              name: 'Rejected',
+              count: rejected,
+              className: 'rejected',
+            },
           ].map((item) => (
             <div className="status-analysis-row" key={item.name}>
               <div>
@@ -233,24 +275,30 @@ function AdvancedAnalytics({ returns }) {
           <div className="status-stack">
             <span
               className="stack-pending"
-              style={{ width: `${total ? (pending / total) * 100 : 0}%` }}
+              style={{
+                width: `${total ? (pending / total) * 100 : 0}%`,
+              }}
             />
 
             <span
               className="stack-approved"
-              style={{ width: `${total ? (approved / total) * 100 : 0}%` }}
+              style={{
+                width: `${total ? (approved / total) * 100 : 0}%`,
+              }}
             />
 
             <span
               className="stack-rejected"
-              style={{ width: `${total ? (rejected / total) * 100 : 0}%` }}
+              style={{
+                width: `${total ? (rejected / total) * 100 : 0}%`,
+              }}
             />
           </div>
         </article>
       </div>
 
       <p className="analytics-disclaimer">
-        These analytics are based on the return records currently stored in
+        These analytics are based on return records currently stored in
         this browser. Product counts represent recorded returns, not return
         rates, because sales-volume data is not included.
       </p>
