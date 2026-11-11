@@ -15,7 +15,7 @@ function ReturnForm({ onAddReturn }) {
     setSuccess(false);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const product = formData.product.trim();
     const customer = formData.customer.trim();
@@ -23,18 +23,22 @@ function ReturnForm({ onAddReturn }) {
       setError('Please enter both a product name and a customer name.');
       return;
     }
-    onAddReturn({
-      id: globalThis.crypto?.randomUUID?.() ?? `return-${Date.now()}`,
-      product,
-      customer,
-      category: formData.category,
-      reason: formData.reason,
-      date: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-      status: 'Pending',
-    });
-    setFormData(initialForm);
-    setError('');
-    setSuccess(true);
+    try {
+      await onAddReturn({
+        product,
+        customer,
+        category: formData.category,
+        reason: formData.reason,
+        date: new Date().toISOString().slice(0, 10),
+        status: 'Pending',
+      });
+      setFormData(initialForm);
+      setError('');
+      setSuccess(true);
+    } catch (err) {
+      setError(err.message || 'Could not save this return record.');
+      setSuccess(false);
+    }
   };
 
   return (
