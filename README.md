@@ -1,6 +1,6 @@
 # ReturnIQ — Return Intelligence Platform
 
-ReturnIQ is a React dashboard for recording and analyzing e-commerce product returns. This version includes a Node/Express API, MongoDB persistence, and JWT-based account authentication.
+ReturnIQ is a React dashboard for recording and analyzing e-commerce product returns. This project includes a Node.js/Express API, MongoDB persistence, and JWT-based account authentication.
 
 ## Features
 
@@ -12,33 +12,27 @@ ReturnIQ is a React dashboard for recording and analyzing e-commerce product ret
 - MongoDB persistence instead of browser-only storage
 - Account registration and sign-in
 - Password hashing with bcrypt and signed JWT sessions
-- Return records are scoped to the signed-in account
+- Return records scoped to the signed-in account
 - Basic API security headers, request size limits, CORS, and authentication rate limiting
 
 ## Requirements
 
 - Windows 10/11, macOS, or Linux
-- Node.js 20.19+ or 22.12+ (recommended for Vite 8)
+- Node.js 20.19+ or 22.12+
 - MongoDB Community Server running locally, or a MongoDB connection URI
 
 ## 1. Configure MongoDB and the API
 
-Open a terminal in the project root, then:
+Open a terminal in the project root.
+
+Navigate to the server folder and create your environment file:
 
 ```powershell
 cd server
 Copy-Item .env.example .env
 ```
 
-Open `server/.env` and set a private JWT secret. In PowerShell, you can generate one with:
-
-```powershell
-node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
-```
-
-Paste the generated value after `JWT_SECRET=` in `server/.env`. Keep `.env` private; it is excluded from Git.
-
-Default local settings:
+Open `server/.env` and configure the following variables:
 
 ```env
 PORT=5000
@@ -47,18 +41,30 @@ JWT_SECRET=your-generated-secret
 CLIENT_ORIGIN=http://localhost:5173
 ```
 
-Install and start the backend:
+Generate a secure JWT secret using PowerShell:
+
+```powershell
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+```
+
+Copy the generated value into `JWT_SECRET` in your `.env` file.
+
+**Important:** Keep `.env` private. Never upload database credentials or JWT secrets to GitHub.
+
+Install dependencies and start the backend:
 
 ```powershell
 npm install
 npm run dev
 ```
 
-The API health endpoint is `http://localhost:5000/api/health`.
+The API health endpoint is:
+
+`http://localhost:5000/api/health`
 
 ### Check MongoDB on Windows
 
-In PowerShell:
+Check whether the MongoDB service is running:
 
 ```powershell
 Get-Service MongoDB
@@ -72,7 +78,7 @@ Start-Service MongoDB
 
 ## 2. Start the React frontend
 
-Keep the backend terminal running. Open a second terminal at the project root:
+Keep the backend terminal running. Open a second terminal in the project root:
 
 ```powershell
 cd client
@@ -80,47 +86,75 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL printed in the terminal (normally `http://localhost:5173`). The Vite development server forwards `/api` requests to the backend at port 5000.
+Open the Vite URL displayed in the terminal, normally:
+
+`http://localhost:5173`
+
+The Vite development server forwards `/api` requests to the backend at port 5000.
 
 ## 3. Create an account and test
 
 1. Choose **Create an account** and register with a name, email, and password of at least 8 characters.
-2. Sign in. On a new account, ReturnIQ inserts the sample return records to make the dashboard useful for the first demo.
+2. Sign in. On a new account, ReturnIQ inserts sample return records for the initial dashboard demonstration.
 3. Add a return record, change its status, and delete a test record.
-4. Refresh the browser. Your saved records should remain because they are stored in MongoDB.
+4. Refresh the browser to verify that saved records remain available in MongoDB.
 5. Sign out and sign in again to verify authentication.
-6. Register a second test account and confirm it cannot see the first account's returns.
+6. Register a second test account and confirm it cannot see the first account's return records.
 
-MongoDB Compass can connect with `mongodb://127.0.0.1:27017`. The database is `returniq`; collections are `users` and `returns`.
+MongoDB Compass can connect using:
 
-## API routes
+`mongodb://127.0.0.1:27017`
+
+The database is named `returniq`, with the `users` and `returns` collections.
+
+## API Routes
 
 ### Authentication
 
-- `POST /api/auth/register` — create an account
-- `POST /api/auth/login` — sign in
-- `GET /api/auth/me` — get the current account (Bearer token required)
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/register` | Create an account |
+| POST | `/api/auth/login` | Sign in |
+| GET | `/api/auth/me` | Get the current account (Bearer token required) |
 
-### Returns (all require a Bearer token)
+### Returns
 
-- `GET /api/returns` — list the signed-in user's records
-- `POST /api/returns` — create a record
-- `PATCH /api/returns/:id` — update a record
-- `DELETE /api/returns/:id` — delete a record
+All return routes require a valid Bearer token.
 
-## Important deployment notes
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/returns` | List the signed-in user's records |
+| POST | `/api/returns` | Create a return record |
+| PATCH | `/api/returns/:id` | Update a return record |
+| DELETE | `/api/returns/:id` | Delete a return record |
+
+## Important Deployment Notes
 
 - Never commit `server/.env`, database credentials, or JWT secrets.
-- For production, use a hosted MongoDB database, a strong unique JWT secret, HTTPS, and set `CLIENT_ORIGIN` to the deployed frontend origin.
-- Configure the deployed frontend's `/api` proxy or API base URL to point to the deployed backend. The current Vite proxy is for local development only.
-- This project has not been deployed by this repository setup. Verify the app locally before deploying.
+- For production, use a hosted MongoDB database, a strong unique JWT secret, and HTTPS.
+- Set `CLIENT_ORIGIN` to the deployed frontend's origin.
+- Configure the deployed frontend's API base URL or backend routing to point to the deployed API.
+- The current Vite proxy is intended for local development only.
+- Deployment must be configured and tested separately before the application can be considered live.
 
-## Project structure
+## Project Structure
 
 ```text
 ReturnIQ/
-  client/       React + Vite frontend
-  server/       Express API, authentication, Mongoose models
-  README.md
-  .gitignore
+├── client/       # React + Vite frontend
+├── server/       # Express API, authentication, Mongoose models
+├── README.md
+└── .gitignore
 ```
+
+## Technologies Used
+
+- React
+- Vite
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JSON Web Tokens (JWT)
+- bcrypt
+
