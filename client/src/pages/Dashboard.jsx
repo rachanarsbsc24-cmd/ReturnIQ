@@ -1,35 +1,30 @@
 import SummaryCard from '../components/SummaryCard';
 import ReturnForm from '../components/ReturnForm';
 import ReturnTable from '../components/ReturnTable';
-import ReasonBreakdown from '../components/ReasonBreakdown';
-import ProductIssues from '../components/ProductIssues';
+import ReturnAgingMonitor from '../components/ReturnAgingMonitor';
 
-function Dashboard({
-  returns,
-  analytics,
-  onAddReturn,
-  onNavigate,
-}) {
+function Dashboard({ returns, analytics, onAddReturn, onNavigate }) {
   return (
-    <main className="page-container">
+    <main className="page-container dashboard">
       <section className="hero">
         <div className="hero-copy">
-          <span className="eyebrow">RETURN INTELLIGENCE PLATFORM</span>
+          <span className="hero-kicker">
+            <span /> E-COMMERCE RETURN INTELLIGENCE
+          </span>
 
           <h1>
-            Understand returns.
+            Make every return
             <br />
-            Improve decisions.
+            <em>a smarter decision.</em>
           </h1>
 
           <p>
-            Monitor customer return activity, identify recurring issues
-            and turn return records into useful business insights.
+            Bring return records into one place, uncover recurring product
+            issues, and turn customer feedback into clearer business action.
           </p>
 
           <button
             className="hero-button"
-            type="button"
             onClick={() => onNavigate('returns')}
           >
             Explore return records <span>→</span>
@@ -37,87 +32,91 @@ function Dashboard({
         </div>
 
         <div className="hero-art" aria-hidden="true">
-          <div className="hero-art-circle">
-            <span>RI</span>
+          <div className="orbit orbit-one" />
+          <div className="orbit orbit-two" />
+          <div className="hero-core">
+            <span>R</span>
+            <small>IQ</small>
           </div>
-        </div>
-
-        <span className="hero-index">01 / RETURN OVERVIEW</span>
-      </section>
-
-      <section className="dashboard-section">
-        <div className="section-intro">
-          <div>
-            <span className="eyebrow">AT A GLANCE</span>
-            <h2>Return overview</h2>
-          </div>
-
-          <span className="section-caption">
-            Summary of recorded return requests
+          <span className="art-label label-top">RETURN DATA</span>
+          <span className="art-label label-bottom">
+            ACTIONABLE INSIGHTS
           </span>
         </div>
 
-        <div className="summary-grid">
-          <SummaryCard
-            label="Total returns"
-            value={analytics.total}
-            detail="All recorded requests"
-          />
-
-          <SummaryCard
-            label="Pending"
-            value={analytics.pending}
-            detail="Awaiting review"
-          />
-
-          <SummaryCard
-            label="Approved"
-            value={analytics.approved}
-            detail="Accepted requests"
-          />
-
-          <SummaryCard
-            label="Rejected"
-            value={analytics.rejected}
-            detail="Declined requests"
-          />
+        <div className="hero-index">
+          01 <span>/ OVERVIEW</span>
         </div>
       </section>
 
-      <section className="dashboard-section">
-        <div className="section-intro">
-          <div>
-            <span className="eyebrow">RECENT ACTIVITY</span>
-            <h2>Latest return requests</h2>
-          </div>
-
-          <button
-            className="text-button"
-            type="button"
-            onClick={() => onNavigate('returns')}
-          >
-            View all records →
-          </button>
+      <section className="section-intro">
+        <div>
+          <span className="eyebrow">AT A GLANCE</span>
+          <h2>Return performance snapshot</h2>
         </div>
-
-        <ReturnTable returns={returns} compact />
+        <span className="section-caption">
+          Based on {analytics.total} recorded requests
+        </span>
       </section>
 
-      <section className="dashboard-insights">
-        <ReasonBreakdown returns={returns} />
-        <ProductIssues returns={returns} />
+      <section className="summary-grid">
+        <SummaryCard
+          title="Total returns"
+          value={analytics.total}
+          subtitle="All recorded requests"
+          icon="↩"
+          tone="gold"
+        />
+
+        <SummaryCard
+          title="Pending review"
+          value={analytics.pending}
+          subtitle="Awaiting a decision"
+          icon="◷"
+          tone="blue"
+        />
+
+        <SummaryCard
+          title="Approved"
+          value={analytics.approved}
+          subtitle="Marked as approved"
+          icon="✓"
+          tone="green"
+        />
+
+        <SummaryCard
+          title="Rejected"
+          value={analytics.rejected}
+          subtitle="Marked as rejected"
+          icon="×"
+          tone="rose"
+        />
       </section>
 
-      <section className="dashboard-section">
-        <div className="section-intro">
-          <div>
-            <span className="eyebrow">ADD A RECORD</span>
-            <h2>Record a new return</h2>
-          </div>
+      <ReturnAgingMonitor
+        returns={returns}
+        onNavigate={onNavigate}
+      />
+
+      <section className="section-intro recent-intro">
+        <div>
+          <span className="eyebrow">LATEST RECORDS</span>
+          <h2>Recent return activity</h2>
         </div>
 
+        <button
+          className="text-button"
+          onClick={() => onNavigate('returns')}
+        >
+          Manage all records <span>→</span>
+        </button>
+      </section>
+
+      <ReturnTable returns={returns} compact />
+
+      <div className="form-section">
         <ReturnForm onAddReturn={onAddReturn} />
-      </section>
+      </div>
     </main>
   );
 }
