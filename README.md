@@ -1,38 +1,98 @@
 # ReturnIQ — Return Intelligence Platform
 
-ReturnIQ is a React dashboard for recording and analyzing e-commerce product returns. This project includes a Node.js/Express API, MongoDB persistence, and JWT-based account authentication.
+ReturnIQ is a web-based E-Commerce Product Returns Management and Analytics Platform developed using React.js, Node.js, Express.js, and MongoDB.
+
+The application allows users to manage product return records, monitor return statuses, explore return analytics, and securely access their data through account authentication.
 
 ## Features
 
-- Dashboard overview and return-status summaries
-- Create, edit, update status, and delete return records
-- Search, filter, sort, and date-range filtering
-- Return reason and product analytics
-- CSV export, bulk actions, printable analytics, and overdue monitoring (where included in the frontend)
-- MongoDB persistence instead of browser-only storage
-- Account registration and sign-in
-- Password hashing with bcrypt and signed JWT sessions
-- Return records scoped to the signed-in account
-- Basic API security headers, request size limits, CORS, and authentication rate limiting
+### 1. Dashboard
+- Dashboard overview with return summary cards.
+- Total returns, pending returns, approved returns, and rejected returns.
+- Recent return activity.
+- Return aging monitoring.
 
-## Requirements
+### 2. Return Management
+- Create new return records.
+- View existing return records.
+- Update return information and status.
+- Delete return records.
+- Manage product, customer, category, reason, date, and status information.
 
-- Windows 10/11, macOS, or Linux
-- Node.js 20.19+ or 22.12+
-- MongoDB Community Server running locally, or a MongoDB connection URI
+### 3. Analytics
+- Return reason breakdown.
+- Product and category insights.
+- Return status analysis.
+- Advanced analytics dashboard.
 
-## 1. Configure MongoDB and the API
+### 4. User Authentication
+- User registration.
+- Email and password login.
+- Password hashing using bcryptjs.
+- JWT-based authentication.
+- Protected API routes.
+- User-specific return records.
 
-Open a terminal in the project root.
+### 5. Backend and Database
+- REST API developed using Express.js.
+- MongoDB database integration.
+- Mongoose schemas and models.
+- Persistent storage of user accounts and return records.
+- User-specific data access.
 
-Navigate to the server folder and create your environment file:
+### 6. API Security
+- Helmet security headers.
+- CORS configuration.
+- JSON request size limits.
+- Authentication rate limiting.
+- JWT verification middleware.
+
+## Technology Stack
+
+| Category | Technologies |
+|---|---|
+| Frontend | React.js, Vite, JavaScript, CSS |
+| Backend | Node.js, Express.js |
+| Database | MongoDB |
+| ODM | Mongoose |
+| Authentication | JWT |
+| Password Security | bcryptjs |
+| API Communication | REST API |
+| Development Tools | Visual Studio Code, Git, GitHub |
+| Database Tool | MongoDB Compass |
+
+## Project Requirements
+
+- Windows 10/11, macOS, or Linux.
+- Node.js and npm.
+- MongoDB Community Server or a MongoDB connection URI.
+- Visual Studio Code or another code editor.
+
+## Installation and Setup
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/rachanarsbsc24-cmd/ReturnIQ.git
+cd ReturnIQ
+```
+
+### 2. Configure the Backend
+
+Navigate to the server directory:
 
 ```powershell
 cd server
+npm install
+```
+
+Create an environment file:
+
+```powershell
 Copy-Item .env.example .env
 ```
 
-Open `server/.env` and configure the following variables:
+Open `server/.env` and configure:
 
 ```env
 PORT=5000
@@ -41,44 +101,35 @@ JWT_SECRET=your-generated-secret
 CLIENT_ORIGIN=http://localhost:5173
 ```
 
-Generate a secure JWT secret using PowerShell:
+Generate a secure JWT secret using:
 
 ```powershell
 node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
-Copy the generated value into `JWT_SECRET` in your `.env` file.
+Replace `your-generated-secret` with the generated value.
 
-**Important:** Keep `.env` private. Never upload database credentials or JWT secrets to GitHub.
+**Important:** Never upload your `.env` file, database credentials, or JWT secrets to GitHub.
 
-Install dependencies and start the backend:
+### 3. Start the Backend
+
+From the `server` directory:
 
 ```powershell
-npm install
 npm run dev
 ```
 
-The API health endpoint is:
+The backend runs at:
+
+`http://localhost:5000`
+
+API health endpoint:
 
 `http://localhost:5000/api/health`
 
-### Check MongoDB on Windows
+### 4. Configure and Start the Frontend
 
-Check whether the MongoDB service is running:
-
-```powershell
-Get-Service MongoDB
-```
-
-If it is stopped, open PowerShell as Administrator and run:
-
-```powershell
-Start-Service MongoDB
-```
-
-## 2. Start the React frontend
-
-Keep the backend terminal running. Open a second terminal in the project root:
+Open a second terminal in the project root:
 
 ```powershell
 cd client
@@ -86,75 +137,161 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL displayed in the terminal, normally:
+Open the frontend at:
 
 `http://localhost:5173`
 
-The Vite development server forwards `/api` requests to the backend at port 5000.
+The Vite development server forwards `/api` requests to the Express backend running on port 5000.
 
-## 3. Create an account and test
+## Database Structure
 
-1. Choose **Create an account** and register with a name, email, and password of at least 8 characters.
-2. Sign in. On a new account, ReturnIQ inserts sample return records for the initial dashboard demonstration.
-3. Add a return record, change its status, and delete a test record.
-4. Refresh the browser to verify that saved records remain available in MongoDB.
-5. Sign out and sign in again to verify authentication.
-6. Register a second test account and confirm it cannot see the first account's return records.
+ReturnIQ uses MongoDB for persistent data storage and Mongoose for database interaction.
 
-MongoDB Compass can connect using:
+**Database name:** `returniq`
+
+**Collections:**
+
+| Collection | Purpose |
+|---|---|
+| users | Stores registered user account information |
+| returns | Stores product return records associated with users |
+
+### Mongoose Models
+
+- `User.js` – Defines the user account schema.
+- `Return.js` – Defines the product return schema.
+
+MongoDB Compass can be used to view and manage the local database.
+
+Local MongoDB connection:
 
 `mongodb://127.0.0.1:27017`
 
-The database is named `returniq`, with the `users` and `returns` collections.
+## API Documentation
 
-## API Routes
-
-### Authentication
+### Authentication Routes
 
 | Method | Endpoint | Description |
 |---|---|---|
-| POST | `/api/auth/register` | Create an account |
-| POST | `/api/auth/login` | Sign in |
-| GET | `/api/auth/me` | Get the current account (Bearer token required) |
+| POST | `/api/auth/register` | Register a new user |
+| POST | `/api/auth/login` | Authenticate a user |
+| GET | `/api/auth/me` | Retrieve the authenticated user's information |
 
-### Returns
+### Return Management Routes
 
-All return routes require a valid Bearer token.
+All return routes require a valid JWT Bearer token.
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/api/returns` | List the signed-in user's records |
-| POST | `/api/returns` | Create a return record |
-| PATCH | `/api/returns/:id` | Update a return record |
+| GET | `/api/returns` | Retrieve the signed-in user's return records |
+| POST | `/api/returns` | Create a new return record |
+| PATCH | `/api/returns/:id` | Update an existing return record |
 | DELETE | `/api/returns/:id` | Delete a return record |
 
-## Important Deployment Notes
+### Health Check
 
-- Never commit `server/.env`, database credentials, or JWT secrets.
-- For production, use a hosted MongoDB database, a strong unique JWT secret, and HTTPS.
-- Set `CLIENT_ORIGIN` to the deployed frontend's origin.
-- Configure the deployed frontend's API base URL or backend routing to point to the deployed API.
-- The current Vite proxy is intended for local development only.
-- Deployment must be configured and tested separately before the application can be considered live.
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/health` | Check API availability |
+
+## Application Testing
+
+The following workflows can be tested in the local development environment:
+
+1. Register a new user account.
+2. Sign in using registered credentials.
+3. View the dashboard and return summaries.
+4. Add a new product return.
+5. Update an existing return record.
+6. Delete a return record.
+7. Refresh the application and verify database persistence.
+8. Sign out and sign in again.
+9. Register another account and verify that return records are isolated between users.
 
 ## Project Structure
 
 ```text
 ReturnIQ/
-├── client/       # React + Vite frontend
-├── server/       # Express API, authentication, Mongoose models
+│
+├── client/
+│   ├── public/
+│   │
+│   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   │   ├── AdvancedAnalytics.jsx
+│   │   │   ├── AuthPage.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── ProductIssues.jsx
+│   │   │   ├── ReasonBreakdown.jsx
+│   │   │   ├── ReturnAgingMonitor.jsx
+│   │   │   ├── ReturnForm.jsx
+│   │   │   ├── ReturnTable.jsx
+│   │   │   └── SummaryCard.jsx
+│   │   │
+│   │   ├── data/
+│   │   │   └── mockReturns.js
+│   │   │
+│   │   ├── pages/
+│   │   │   └── Dashboard.jsx
+│   │   │
+│   │   ├── services/
+│   │   │   └── api.js
+│   │   │
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── main.jsx
+│   │
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
+│
+├── server/
+│   ├── config/
+│   │   └── db.js
+│   │
+│   ├── middleware/
+│   │   └── auth.js
+│   │
+│   ├── models/
+│   │   ├── Return.js
+│   │   └── User.js
+│   │
+│   ├── routes/
+│   │   ├── auth.js
+│   │   └── returns.js
+│   │
+│   ├── .env.example
+│   ├── package.json
+│   └── server.js
+│
 ├── README.md
 └── .gitignore
 ```
 
-## Technologies Used
+## Deployment Status
 
-- React
-- Vite
-- Node.js
-- Express.js
-- MongoDB
-- Mongoose
-- JSON Web Tokens (JWT)
-- bcrypt
+The project has been configured for local development and GitHub version control.
+
+Cloud deployment using MongoDB Atlas and Render has been attempted but requires further connection configuration and verification.
+
+The current Vite proxy is intended for local development. Production deployment requires separate frontend and backend configuration.
+
+## Future Enhancements
+
+- Complete cloud deployment.
+- Enhanced return trend analysis.
+- Additional reporting and visualization features.
+- Improved user and administrator management.
+- Further performance and scalability improvements.
+
+## Conclusion
+
+ReturnIQ combines a React-based dashboard with an Express REST API, MongoDB persistence, and JWT-based authentication to provide a structured platform for managing and analyzing e-commerce product returns.
+
+The project demonstrates full-stack web development, database integration, API development, and user authentication.
+
+## Author
+
+Developed as an academic project.
 
